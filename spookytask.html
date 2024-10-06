@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spooky Task Matrix - Retro Style</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: #330066;
+            color: #ffccff;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .retro-font {
+            font-family: 'Press Start 2P', cursive;
+        }
+        .window {
+            background-color: #9933cc;
+            border: 2px solid;
+            border-top-color: #cc99ff;
+            border-left-color: #cc99ff;
+            border-right-color: #660099;
+            border-bottom-color: #660099;
+            box-shadow: 3px 3px 0 0 #000000;
+            margin-bottom: 20px;
+        }
+        .window-title {
+            background: linear-gradient(to right, #660099, #9933cc);
+            padding: 5px 7px 5px 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .window-content {
+            padding: 10px;
+            color: #ffccff;
+        }
+        .button {
+            background-color: #cc99ff;
+            border: 2px solid;
+            border-top-color: #ffccff;
+            border-left-color: #ffccff;
+            border-right-color: #9966cc;
+            border-bottom-color: #9966cc;
+            padding: 4px 8px;
+            cursor: pointer;
+            color: #330066;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .button:active {
+            border-top-color: #9966cc;
+            border-left-color: #9966cc;
+            border-right-color: #ffccff;
+            border-bottom-color: #ffccff;
+        }
+        input[type="text"] {
+            background-color: #cc99ff;
+            color: #330066;
+            border: 2px inset #9966cc;
+            padding: 5px;
+            font-size: 14px;
+        }
+        input[type="text"]::placeholder {
+            color: #660099;
+        }
+        .task-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .task-quadrant {
+            border: 1px solid #cc99ff;
+            padding: 5px;
+        }
+        .task-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+        .task-item {
+            background-color: #660099;
+            border: 1px solid #cc99ff;
+            margin-bottom: 5px;
+            padding: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: move;
+        }
+        .task-item.dragging {
+            opacity: 0.5;
+        }
+        .warning {
+            background-color: #660099;
+            border: 1px solid #cc99ff;
+            padding: 10px;
+            margin-top: 10px;
+            color: #ffccff;
+        }
+    </style>
+</head>
+<body>
+    <div id="welcomeWindow" class="window">
+        <div class="window-title">
+            <div class="retro-font" style="color: #ffccff; font-weight: bold; font-size: 14px;">Welcome</div>
+            <div>
+                <button class="button" style="width: 20px; height: 20px; padding: 0;" onclick="toggleInstructions()">_</button>
+                <button class="button" style="width: 20px; height: 20px; padding: 0; margin-left: 2px;">□</button>
+                <button class="button" style="width: 20px; height: 20px; padding: 0; margin-left: 2px;">X</button>
+            </div>
+        </div>
+        <div id="welcomeContent" class="window-content">
+            <div style="margin-bottom: 15px;">
+                <h2 class="retro-font" style="font-size: 16px; margin-bottom: 10px; color: #ffccff;">🎃 Happy Halloween! 👻</h2>
+                <p style="margin-bottom: 10px;">Nothing is scarier than facing your responsibilities!! 👹👹</p>
+                <p>Just add your tasks, they appear in "Non-Urgent & Non-Important". Drag and drop tasks to the correct category or delete it completely 👻🍂🍂🍁💀</p>
+            </div>
+            <div class="warning">
+                <p><strong>Warning:</strong> Tasks are not saved between sessions. Refreshing the page will cause all tasks to be lost.</p>
+            </div>
+            <div style="display: flex; margin-top: 10px;">
+                <input type="text" id="newTaskInput" placeholder="Enter new task" style="flex-grow: 1;">
+                <button class="button" style="display: flex; align-items: center; margin-left: 5px;" onclick="addTask()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    Add Task
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="window">
+        <div class="window-title">
+            <div class="retro-font" style="color: #ffccff; font-weight: bold; font-size: 14px;">Spooky Task Matrix</div>
+            <div>
+                <button class="button" style="width: 20px; height: 20px; padding: 0;">_</button>
+                <button class="button" style="width: 20px; height: 20px; padding: 0; margin-left: 2px;">□</button>
+                <button class="button" style="width: 20px; height: 20px; padding: 0; margin-left: 2px;">X</button>
+            </div>
+        </div>
+        <div class="window-content">
+            <div class="task-grid">
+                <div id="urgent-important" class="task-quadrant" ondrop="drop(event)" ondragover="allowDrop(event)">
+                    <h3 class="retro-font" style="font-size: 12px; margin-top: 0; margin-bottom: 5px; color: #ffccff;">Urgent & Important</h3>
+                    <ul class="task-list"></ul>
+                </div>
+                <div id="not-urgent-important" class="task-quadrant" ondrop="drop(event)" ondragover="allowDrop(event)">
+                    <h3 class="retro-font" style="font-size: 12px; margin-top: 0; margin-bottom: 5px; color: #ffccff;">Not Urgent but Important</h3>
+                    <ul class="task-list"></ul>
+                </div>
+                <div id="urgent-not-important" class="task-quadrant" ondrop="drop(event)" ondragover="allowDrop(event)">
+                    <h3 class="retro-font" style="font-size: 12px; margin-top: 0; margin-bottom: 5px; color: #ffccff;">Urgent but Not Important</h3>
+                    <ul class="task-list"></ul>
+                </div>
+                <div id="not-urgent-not-important" class="task-quadrant" ondrop="drop(event)" ondragover="allowDrop(event)">
+                    <h3 class="retro-font" style="font-size: 12px; margin-top: 0; margin-bottom: 5px; color: #ffccff;">Not Urgent & Not Important</h3>
+                    <ul class="task-list"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let taskId = 3; // Start from 3 to account for preloaded tasks
+        const tasks = {
+            'urgent-important': [],
+            'not-urgent-important': [],
+            'urgent-not-important': [],
+            'not-urgent-not-important': [
+                { id: 'task1', content: 'Buy Halloween candy' },
+                { id: 'task2', content: 'Plan costume party' },
+                { id: 'task3', content: 'Decorate house' },
+            ],
+        };
+
+        function toggleInstructions() {
+            const content = document.getElementById('welcomeContent');
+            content.style.display = content.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function addTask() {
+            const input = document.getElementById('newTaskInput');
+            const content = input.value.trim();
+            if (content) {
+                taskId++;
+                const newTask = { id: `task${taskId}`, content };
+                tasks['not-urgent-not-important'].push(newTask);
+                renderTasks();
+                input.value = '';
+            }
+        }
+
+        function renderTasks() {
+            for (const [quadrantId, taskList] of Object.entries(tasks)) {
+                const quadrant = document.getElementById(quadrantId);
+                const ul = quadrant.querySelector('.task-list');
+                ul.innerHTML = '';
+                taskList.forEach(task => {
+                    const li = document.createElement('li');
+                    li.className = 'task-item';
+                    li.id = task.id;
+                    li.draggable = true;
+                    li.ondragstart = drag;
+                    li.innerHTML = `
+                        ${task.content}
+                        <button class="button" onclick="deleteTask('${task.id}', '${quadrantId}')" style="padding: 2px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                        </button>
+                    `;
+                    ul.appendChild(li);
+                });
+            }
+        }
+
+        function deleteTask(taskId, quadrantId) {
+            tasks[quadrantId] = tasks[quadrantId].filter(task => task.id !== taskId);
+            renderTasks();
+        }
+
+        function allowDrop(ev) {
+            ev.preventDefault();
+        }
+
+        function drag(ev) {
+            ev.dataTransfer.setData("text", ev.target.id);
+            ev.target.classList.add('dragging');
+        }
+
+        function drop(ev) {
+            ev.preventDefault();
+            const taskId = ev.dataTransfer.getData("text");
+            const task = document.getElementById(taskId);
+            
+            if (!task) return; // Exit if the task element doesn't exist
+            
+            task.classList.remove('dragging');
+            
+            let destQuadrant = ev.target.closest('.task-quadrant');
+            if (!destQuadrant) return; // Exit if we're not dropping into a quadrant
+            
+            destQuadrant = destQuadrant.id;
+            
+            // Find the task object and its current quadrant
+            let sourceQuadrant;
+            let taskObj;
+            for (const [quadId, taskList] of Object.entries(tasks)) {
+                const foundTask = taskList.find(t => t.id === taskId);
+                if (foundTask) {
+                    sourceQuadrant = quadId;
+                    taskObj = foundTask;
+                    break;
+                }
+            }
+            
+            if (!taskObj || !sourceQuadrant) return; // Exit if we couldn't find the task
+            
+            // Remove the task from its current quadrant
+            tasks[sourceQuadrant] = tasks[sourceQuadrant].filter(t => t.id !== taskId);
+            
+            // Add the task to the new quadrant
+            tasks[destQuadrant].push(taskObj);
+            
+            renderTasks();
+        }
+
+        // Initial render
+        renderTasks();
+    </script>
+</body>
+</html>
